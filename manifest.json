@@ -1,0 +1,9 @@
+{
+  "name": "MHAC Delivery",
+  "short_name": "MHAC Delivery",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#111",
+  "description": "MHAC Delivery mobile web app"
+}
