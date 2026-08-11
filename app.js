@@ -653,8 +653,7 @@ function riderStart(id){
 }
 
 
-function deliver(id){
-  const o=orders.find(x=>x.id===id);
+function deliver(id)
   if(!o)return;
 
   if(o.status!=="Out for Delivery"){
