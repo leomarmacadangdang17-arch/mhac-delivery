@@ -1,5 +1,6 @@
 // MHAC DELIVERY - automatic address/GPS delivery fee checkout
-const AREAS=["Paniqui","Moncada","Ramos","Gerona","Pura","Anao","Nampicuan"];
+const LOCATIONS={"Paniqui":["Abogado","Acocolao","Aduas","Apulid","Balaoang","Barang","Brillante","Burgos","Cabayaoasan","Canan","Carino","Cayanga","Colibangbang","Coral","Dapdap","Estacion","Mabilang","Manaois","Matalapitap","Nagmisaan","Nancamarinan","Nipaco","Patalan","Poblacion Norte","Poblacion Sur","Rang-ayan","Salumague","Samput","San Carlos","San Isidro","San Juan de Milla","Santa Ines","Sinigpit","Tablang","Ventenilla"],"Moncada":["Ablang-Sapang","Aringin","Atencio","Banaoang East","Banaoang West","Baquero Norte","Baquero Sur","Burgos","Calamay","Calapan","Camangaan East","Camangaan West","Camposanto 1 - Norte","Camposanto 1 - Sur","Camposanto 2","Capaoayan","Lapsing","Mabini","Maluac","Poblacion 1","Poblacion 2","Poblacion 3","Poblacion 4","Rizal","San Juan","San Julian","San Leon","San Pedro","San Roque","Santa Lucia East","Santa Lucia West","Santa Maria","Santa Monica","Tubectubang","Tolega Norte","Tolega Sur","Villa"],"Ramos":["Coral-Iloco","Guiteb","Pance","Poblacion Center","Poblacion North","Poblacion South","San Juan","San Raymundo","Toledo"],"Gerona":["Abagon","Amacalan","Apsayan","Ayson","Bawa","Buenlag","Bularit","Calayaan","Carbonel","Cardona","Caturay","Danzo","Dicolor","Don Basilio","Luna","Mabini","Magaspac","Malayep","Matapitap","Matayuncab","New Salem","Oloybuaya","Padapada","Parsolingan","Pinasling","Plastado","Poblacion 1","Poblacion 2","Poblacion 3","Quezon","Rizal","Salapungan","San Agustin","San Antonio","San Bartolome","San Jose","Santa Lucia","Santiago","Sembrano","Singat","Sulipa","Tagumbao","Tangcaran","Villa Paz"],"Pura":["Balite","Buenavista","Cadanglaan","Estipona","Linao","Maasin","Matindeg","Maungib","Naya","Nilasin 1st","Nilasin 2nd","Poblacion 1","Poblacion 2","Poblacion 3","Poroc","Singat"],"Anao":["Baguindoc","Bantog","Campos","Carmen","Casili","Don Ramon","Hernando","Poblacion","Rizal","San Francisco East","San Francisco West","San Jose North","San Jose South","San Juan","San Roque","Santo Domingo","Sinense","Suaverdez"],"Nampicuan":["Alemania","Ambasador Alzate Village","Cabaducan East","Cabaducan West","Cabawangan","East Central Poblacion","Edy","Maeling","Mayantoc","Medico","Monic","North Poblacion","Northwest Poblacion","Estacion","West Poblacion","Recuerdo","South Central Poblacion","Southeast Poblacion","Southwest Poblacion","Tony","West Central Poblacion"]};
+const MUNICIPALITIES=Object.keys(LOCATIONS);
 const PRODUCTS=[
  ["Chicken Meal",120,"Foods","🍗"],["Burger Meal",150,"Foods","🍔"],
  ["Grocery Essentials",250,"Grocery","🛒"],["Market Errand",100,"Market","🏪"],
@@ -24,7 +25,7 @@ function productRow(p,i){
 }
 function home(){
  app.innerHTML=`<div class="app">${header()}<main class="content">
- <div class="panel"><b>📍 Service Areas</b><div class="small">${AREAS.join(" • ")}</div></div>
+ <div class="panel"><b>📍 Service Areas</b><div class="small">${MUNICIPALITIES.join(" • ")}</div></div>
  <div class="section">Categories</div>
  <div class="grid">${["Foods","Grocery","Market","Medicine"].map(x=>`<button class="cat" onclick="category('${x}')">${x}</button>`).join("")}</div>
  <div class="section">Popular</div>${PRODUCTS.slice(0,3).map((p,i)=>productRow(p,i)).join("")}
@@ -73,13 +74,13 @@ async function geocodeAddress(address,area){
 }
 async function calculateDelivery(){
  const address=document.getElementById("caddress").value.trim();
- const area=document.getElementById("carea").value;
+ const municipality=document.getElementById("cmuni").value;\n const barangay=document.getElementById("cbarangay").value;
  const msg=document.getElementById("deliveryMsg");
  if(!address){if(msg)msg.innerHTML="⚠️ Ilagay muna ang complete address.";return;}
  if(!gps){if(msg)msg.innerHTML="⚠️ Pindutin muna ang ALLOW GPS.";return;}
  if(msg)msg.innerHTML="🔎 Hinahanap ang address...";
  try{
-   checkoutDestination=await geocodeAddress(address,area);
+   checkoutDestination=await geocodeAddress(address,barangay,municipality);
    checkoutDistance=haversine(gps.lat,gps.lng,checkoutDestination.lat,checkoutDestination.lng);
    checkoutDeliveryFee=deliveryFee(checkoutDistance);
    const sub=cart.reduce((s,p)=>s+p[1],0),sf=sub*.10;
@@ -91,6 +92,11 @@ async function calculateDelivery(){
    if(msg)msg.innerHTML="❌ Hindi makita ang address. Dagdagan ang Barangay, Municipality at Province.";
  }
 }
+function updateBarangays(){
+ const m=document.getElementById("cmuni")?.value, b=document.getElementById("cbarangay");
+ if(!b)return;
+ b.innerHTML=(LOCATIONS[m]||[]).map(x=>`<option>${x}</option>`).join("");
+}
 function checkout(){
  if(!cart.length){alert("Walang laman ang cart.");return home();}
  const sub=cart.reduce((s,p)=>s+p[1],0),sf=sub*.10;
@@ -101,7 +107,8 @@ function checkout(){
  <label>Full Name</label><input id="cname" placeholder="Enter your full name">
  <label>Mobile Number</label><input id="cphone" type="tel" placeholder="09XXXXXXXXX">
  <label>Complete Delivery Address</label><input id="caddress" placeholder="House / Street / Barangay / Municipality / Province">
- <label>Delivery Area</label><select id="carea">${AREAS.map(x=>`<option>${x}</option>`).join("")}</select>
+ <label>Municipality</label><select id="cmuni" onchange="updateBarangays()">${MUNICIPALITIES.map(x=>`<option>${x}</option>`).join("")}</select>
+ <label>Barangay</label><select id="cbarangay"></select>
  <button class="btn light" onclick="requestGPS()">📍 ALLOW GPS</button>
  <button class="btn" onclick="calculateDelivery()">🔎 CHECK ADDRESS & DELIVERY FEE</button>
  <div id="deliveryMsg" class="notice">Allow GPS, enter your address, then check the address.</div>
@@ -118,13 +125,14 @@ function checkout(){
  <label><input type="radio" name="payment" value="GCASH"> 📱 GCash Payment</label></div>
  <button class="bottom" onclick="placeOrder()">🛵 PLACE ORDER</button>
  </main></div>`;
+ updateBarangays();
 }
 function removeCart(i){cart.splice(i,1);save();checkout();}
 function placeOrder(){
  const name=document.getElementById("cname").value.trim();
  const phone=document.getElementById("cphone").value.trim();
  const address=document.getElementById("caddress").value.trim();
- const area=document.getElementById("carea").value;
+ const municipality=document.getElementById("cmuni").value;\n const barangay=document.getElementById("cbarangay").value;
  const payment=document.querySelector('input[name="payment"]:checked')?.value||"COD";
  if(!name)return alert("Ilagay ang pangalan.");
  if(!phone)return alert("Ilagay ang mobile number.");
@@ -132,7 +140,7 @@ function placeOrder(){
  if(checkoutDistance===null||checkoutDeliveryFee===null)return alert("I-check muna ang address at delivery fee.");
  const sub=cart.reduce((s,p)=>s+p[1],0),sf=sub*.10;
  const o={id:"MHAC-"+Date.now().toString().slice(-8),date:new Date().toLocaleString(),
- customer:name,phone,address,area,distance:checkoutDistance,gps,destination:checkoutDestination,
+ customer:name,phone,address,municipality,barangay,distance:checkoutDistance,gps,destination:checkoutDestination,
  payment,items:cart.map(p=>({name:p[0],price:p[1],category:p[2],icon:p[3]})),
  subtotal:sub,serviceFee:sf,deliveryFee:checkoutDeliveryFee,total:sub+sf+checkoutDeliveryFee,status:"PENDING",rider:null};
  orders.unshift(o);cart=[];save();
@@ -150,13 +158,13 @@ function placeOrder(){
 function ordersPage(){
  app.innerHTML=`<div class="app">${header("MY ORDERS","Track your orders")}<main class="content"><button class="back" onclick="home()">← Back</button>
  ${orders.length?orders.map(o=>`<div class="panel"><div class="item"><span><b>${o.id}</b><br>${o.date}</span><b class="badge">${o.status}</b></div>
- <div class="small">${o.customer} • ${o.area}</div><div class="item"><span>Delivery Fee</span><b>${peso(o.deliveryFee)}</b></div>
+ <div class="small">${o.customer} • ${o.barangay}, ${o.municipality}</div><div class="item"><span>Delivery Fee</span><b>${peso(o.deliveryFee)}</b></div>
  <div class="item"><span>Total</span><b>${peso(o.total)}</b></div></div>`).join(""):`<div class="notice">No orders yet.</div>`}</main></div>`;
 }
 function adminPage(){
  app.innerHTML=`<div class="app">${header("ADMIN","Order management")}<main class="content"><button class="back" onclick="home()">← Back</button>
  ${orders.length?orders.map((o,i)=>`<div class="panel"><div class="item"><span><b>${o.id}</b><br>${o.customer}<br>${o.phone}</span><b>${peso(o.total)}</b></div>
- <div class="small">${o.address} • ${o.distance.toFixed(2)} km</div>
+ <div class="small">${o.address} • ${o.barangay}, ${o.municipality} • ${o.distance.toFixed(2)} km</div>
  <select onchange="setStatus(${i},this.value)">${["PENDING","ACCEPTED","PREPARING","OUT FOR DELIVERY","DELIVERED","CANCELLED"].map(s=>`<option ${o.status===s?"selected":""}>${s}</option>`).join("")}</select>
  <input value="${o.rider||""}" placeholder="Assign rider" onchange="setRider(${i},this.value)"></div>`).join(""):`<div class="notice">No orders.</div>`}</main></div>`;
 }
