@@ -243,7 +243,9 @@ function placeOrder(){
   const order={
     id:Date.now(),name,mobile,address,municipality,barangay,
     items:[...cart],subtotal:subtotal(),serviceFee:service,
-    deliveryFee:checkoutDeliveryFee,status:"Pending",
+    deliveryFee:checkoutDeliveryFee,
+distanceKm:checkoutDistance,
+status:"Pending",
     payment,gps:gps?{...gps}:null,createdAt:new Date().toISOString()
   };
   orders.push(order);cart=[];save();
