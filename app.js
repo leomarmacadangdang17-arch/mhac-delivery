@@ -64,7 +64,22 @@ function requestGPS(){
  },()=>{if(m)m.innerHTML="❌ I-allow ang Location permission para ma-compute ang delivery fee."},
  {enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
-async function geocodeAddress(address,area){
+async function geocodeAddress(address,barangay,municipality){
+  const q=encodeURIComponent(
+    `${address}, ${barangay}, ${municipality}, Tarlac, Philippines`
+  );
+  const r=await fetch(
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}`
+  );
+  if(!r.ok)throw Error("geocode");
+  const d=await r.json();
+  if(!d.length)throw Error("notfound");
+  return {
+    lat:Number(d[0].lat),
+    lng:Number(d[0].lon),
+    display:d[0].display_name
+  };
+}
  const q=encodeURIComponent(`${address}, ${area}, Philippines`);
  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}`);
  if(!r.ok)throw Error("geocode");
