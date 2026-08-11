@@ -144,14 +144,60 @@ function allowGPS(){
 }
 
 async function geocodeAddress(address,barangay,municipality){
-  const q=encodeURIComponent(`${address}, ${barangay}, ${municipality}, Tarlac, Philippines`);
-  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}`,{
-    headers:{"Accept-Language":"en"}
-  });
-  if(!r.ok)throw Error("geocode");
-  const d=await r.json();
-  if(!d.length)throw Error("notfound");
-  return {lat:Number(d[0].lat),lng:Number(d[0].lon),display:d[0].display_name};
+  const queries=[
+    `${address}, ${barangay}, ${municipality}, Tarlac, Philippines`,
+    `${barangay}, ${municipality}, Tarlac, Philippines`
+  ];
+
+  // Keep searches inside Tarlac so a bad text match cannot produce a
+  // completely unrelated location hundreds of kilometres away.
+  const viewbox="120.20,15.90,120.90,15.10";
+
+  for(const qText of queries){
+    const q=encodeURIComponent(qText);
+
+    // First try Nominatim.
+    try{
+      const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&bounded=1&viewbox=${viewbox}&q=${q}`;
+      const r=await fetch(url,{headers:{"Accept-Language":"en"}});
+      if(r.ok){
+        const d=await r.json();
+        if(d.length){
+          return {
+            lat:Number(d[0].lat),
+            lng:Number(d[0].lon),
+            display:d[0].display_name,
+            approximate:qText!==queries[0]
+          };
+        }
+      }
+    }catch(e){}
+
+    // Fallback to Photon if Nominatim does not return a result.
+    try{
+      const url=`https://photon.komoot.io/api/?limit=1&lang=en&q=${q}`;
+      const r=await fetch(url);
+      if(r.ok){
+        const d=await r.json();
+        const f=d.features&&d.features[0];
+        if(f&&f.geometry&&Array.isArray(f.geometry.coordinates)){
+          const [lng,lat]=f.geometry.coordinates;
+          if(lat>=15.10&&lat<=15.90&&lng>=120.20&&lng<=120.90){
+            return {
+              lat:Number(lat),
+              lng:Number(lng),
+              display:f.properties?.name
+                ? `${f.properties.name}, ${f.properties.city||municipality}, Tarlac, Philippines`
+                : qText,
+              approximate:qText!==queries[0]
+            };
+          }
+        }
+      }
+    }catch(e){}
+  }
+
+  throw Error("notfound");
 }
 
 function distanceKm(aLat,aLon,bLat,bLon){
@@ -204,7 +250,9 @@ async function checkAddress(){
     document.getElementById("distance").textContent=`${km.toFixed(2)} km`;
     document.getElementById("fee").textContent=peso(checkoutDeliveryFee);
     document.getElementById("grandTotal").textContent=`TOTAL: ${peso(subtotal()*1.10+checkoutDeliveryFee)}`;
-    result.textContent=`✅ Address found: ${destination.display}`;
+    result.textContent=destination.approximate
+      ? `✅ GPS distance estimated to ${barangay}, ${municipality}. Complete address was not found, so barangay location was used.`
+      : `✅ Address found: ${destination.display}`;
   }catch(e){
     checkoutDistance=null;
     checkoutDeliveryFee=null;
