@@ -452,52 +452,128 @@ function cancelOrder(id){
 
 
 function riderPage(){
+  const riderOrders = orders.filter(o =>
+    o.status === "Assigned" ||
+    o.status === "Rider Accepted" ||
+    o.status === "Out for Delivery" ||
+    o.status === "Delivered"
+  );
+
   document.getElementById("app").innerHTML=`
   <header>
     <h1>🛵 Rider Dashboard</h1>
-    <p>Assigned deliveries</p>
+    <p>Delivery requests and deliveries</p>
   </header>
 
   <main>
     <section class="card">
-      <h2>🚚 Deliveries</h2>
+      <h2>🔔 Delivery Requests</h2>
 
-      ${orders.filter(o=>
-        o.status==="Assigned" ||
-        o.status==="Out for Delivery" ||
-        o.status==="Delivered"
-      ).length ?
+      ${riderOrders.length ? riderOrders.slice().reverse().map(o=>{
 
-      orders.filter(o=>
-        o.status==="Assigned" ||
-        o.status==="Out for Delivery" ||
-        o.status==="Delivered"
-      ).slice().reverse().map(o=>`
+        let buttons="";
+
+        if(o.status==="Assigned"){
+          buttons=`
+            <button class="btn full"
+              onclick="riderAccept(${o.id})">
+              ✅ ACCEPT DELIVERY
+            </button>
+
+            <button class="btn light full"
+              style="margin-top:8px"
+              onclick="riderDecline(${o.id})">
+              ❌ DECLINE DELIVERY
+            </button>
+          `;
+        }
+
+        if(o.status==="Rider Accepted"){
+          buttons=`
+            <div class="notice">
+              ✅ Delivery accepted by rider.
+            </div>
+
+            <button class="btn full"
+              style="margin-top:8px"
+              onclick="riderStart(${o.id})">
+              🚚 START DELIVERY
+            </button>
+          `;
+        }
+
+        if(o.status==="Out for Delivery"){
+          buttons=`
+            <div class="notice">
+              🚚 Order is currently out for delivery.
+            </div>
+
+            <button class="btn full"
+              style="margin-top:8px"
+              onclick="deliver(${o.id})">
+              ✅ MARK DELIVERED
+            </button>
+          `;
+        }
+
+        if(o.status==="Delivered"){
+          buttons=`
+            <div class="notice">
+              ✅ DELIVERY COMPLETED
+            </div>
+          `;
+        }
+
+        return `
         <div class="order">
 
           <b>ORDER #${o.id}</b>
 
-          <div style="margin-top:6px">
-            👤 ${o.name}
+          <div style="margin-top:8px">
+            👤 <b>${o.name}</b>
           </div>
 
           <div>
             📱 ${o.mobile}
           </div>
 
-          <div>
+          <div style="margin-top:6px">
             📍 ${o.address}
           </div>
 
           <div>
-            ${o.municipality} • ${o.barangay}
+            🏘️ ${o.barangay}, ${o.municipality}
           </div>
 
           <div style="margin-top:8px">
+            📏 Distance:
+            <b>${o.distanceKm != null
+              ? Number(o.distanceKm).toFixed(2)+" km"
+              : "Not available"}</b>
+          </div>
+
+          <div>
             🛵 Delivery Fee:
-            <b>${o.deliveryFee==null
+            <b>${o.deliveryFee == null
               ? "Admin approval"
               : peso(o.deliveryFee)}</b>
+          </div>
+
+          <div>
+            🧾 Order:
+            <b>${peso(o.subtotal)}</b>
+          </div>
+
+          <div>
+            10% Service Fee:
+            <b>${peso(o.serviceFee)}</b>
+          </div>
+
+          <div class="total">
+            TOTAL:
+            ${o.deliveryFee == null
+              ? "Admin approval"
+              : peso(o.subtotal+o.serviceFee+o.deliveryFee)}
           </div>
 
           <div style="margin-top:8px">
@@ -505,46 +581,69 @@ function riderPage(){
             <b>${o.status}</b>
           </div>
 
-          ${o.status==="Assigned" ? `
-            <button
-              class="btn full"
-              style="margin-top:10px"
-              onclick="riderStart(${o.id})">
-              🚚 START DELIVERY
-            </button>
-          ` : ""}
+          <div style="margin-top:10px">
+            ${buttons}
+          </div>
 
-          ${o.status==="Out for Delivery" ? `
-            <button
-              class="btn full"
-              style="margin-top:10px"
-              onclick="deliver(${o.id})">
-              ✅ MARK DELIVERED
-            </button>
-          ` : ""}
-
-          ${o.status==="Delivered" ? `
-            <div class="notice" style="margin-top:10px">
-              ✅ DELIVERY COMPLETED
-            </div>
-          ` : ""}
-
-        </div>
-      `).join("") : `
+        </div>`;
+      }).join("") : `
         <div class="notice">
-          No assigned deliveries.
+          No delivery requests.
         </div>
       `}
     </section>
 
-    <button class="btn light full" onclick="home()">← Back</button>
+    <button class="btn light full" onclick="home()">
+      ← Back
+    </button>
   </main>`;
+}
+
+
+function riderAccept(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+
+  if(o.status!=="Assigned"){
+    alert("This delivery is no longer available.");
+    return;
+  }
+
+  o.status="Rider Accepted";
+  o.riderAcceptedAt=new Date().toISOString();
+
+  save();
+  riderPage();
+}
+
+
+function riderDecline(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+
+  if(o.status!=="Assigned"){
+    alert("This delivery is no longer available.");
+    return;
+  }
+
+  if(!confirm("Decline this delivery request?"))return;
+
+  o.status="Rider Declined";
+  o.riderDeclinedAt=new Date().toISOString();
+
+  save();
+  riderPage();
 }
 
 
 function riderStart(id){
   const o=orders.find(x=>x.id===id);
   if(!o)return;
+
+  if(o.status!=="Rider Accepted"){
+    alert("The rider must accept the delivery first.");
+    return;
+  }
 
   o.status="Out for Delivery";
   o.outForDeliveryAt=new Date().toISOString();
@@ -555,6 +654,20 @@ function riderStart(id){
 
 
 function deliver(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+
+  if(o.status!=="Out for Delivery"){
+    alert("Start the delivery first.");
+    return;
+  }
+
+  o.status="Delivered";
+  o.deliveredAt=new Date().toISOString();
+
+  save();
+  riderPage();
+}
   const o=orders.find(x=>x.id===id);
   if(!o)return;
 
