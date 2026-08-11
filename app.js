@@ -74,7 +74,8 @@ async function geocodeAddress(address,area){
 }
 async function calculateDelivery(){
  const address=document.getElementById("caddress").value.trim();
- const municipality=document.getElementById("cmuni").value;\n const barangay=document.getElementById("cbarangay").value;
+ const municipality=document.getElementById("cmuni").value;
+const barangay=document.getElementById("cbarangay").value;
  const msg=document.getElementById("deliveryMsg");
  if(!address){if(msg)msg.innerHTML="⚠️ Ilagay muna ang complete address.";return;}
  if(!gps){if(msg)msg.innerHTML="⚠️ Pindutin muna ang ALLOW GPS.";return;}
@@ -132,7 +133,8 @@ function placeOrder(){
  const name=document.getElementById("cname").value.trim();
  const phone=document.getElementById("cphone").value.trim();
  const address=document.getElementById("caddress").value.trim();
- const municipality=document.getElementById("cmuni").value;\n const barangay=document.getElementById("cbarangay").value;
+ const municipality=document.getElementById("cmuni").value;
+const barangay=document.getElementById("cbarangay").value;
  const payment=document.querySelector('input[name="payment"]:checked')?.value||"COD";
  if(!name)return alert("Ilagay ang pangalan.");
  if(!phone)return alert("Ilagay ang mobile number.");
