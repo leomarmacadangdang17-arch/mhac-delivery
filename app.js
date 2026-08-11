@@ -2,7 +2,7 @@
 "use strict";
 
 const LOCATIONS = {
-  "Paniqui":["Abogado","Acu","Aglipay","Amacalan","Apulid","Balibago","Bantog","Brgy. A","Brgy. B"],
+  "Paniqui":["Abogado","Acocolao","Aduas","Apulid","Balaoang","Barang","Brillante","Burgos","Cabayaoasan","Canan","Carino","Cayanga","Colibangbang","Coral","Dapdap","Estacion","Mabilang","Manaois","Matalapitap","Nagmisaan","Nancamarinan","Nipaco","Patalan","Poblacion Norte","Poblacion Sur","Rang-ayan","Salomague","Samput","San Carlos","San Isidro","San Juan de Milla","Santa Ines","Sinigpit","Tablang","Ventenilla"],
   "Moncada":["Abagon","Arobo","Burgos","Cabaruan","Carmen","Lambakin"],
   "Ramos":["Anao","Concepcion","Poblacion","San Juan"],
   "Gerona":["Abagon","Buenlag","Caturay","Poblacion"],
