@@ -1,1 +1,44 @@
-*{box-sizing:border-box}body{margin:0;background:#f1f2f4;font-family:Arial,sans-serif;color:#171717}.app{max-width:560px;min-height:100vh;margin:auto;background:#fff;padding-bottom:85px}.top{background:#111;color:#fff;padding:18px 16px;border-bottom:4px solid #e31b23}.brand{font-weight:900;font-size:25px}.sub{font-size:12px;opacity:.8}.content{padding:15px}.panel,.card{border:1px solid #ddd;border-radius:15px;padding:14px;margin-bottom:12px;background:#fff}.section{font-size:18px;font-weight:900;margin:18px 0 9px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.cat{padding:17px;border:1px solid #ddd;border-radius:14px;background:#fafafa;font-weight:800}.small{font-size:12px;color:#666}.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.btn{border:0;border-radius:11px;background:#111;color:#fff;padding:11px 14px;font-weight:800}.red{background:#e31b23}.light{background:#eee;color:#111}.input,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:11px;margin:5px 0 10px;font:inherit;background:#fff}.back{border:0;background:none;font-weight:800;padding:0;margin-bottom:12px}.total{font-size:21px;font-weight:900}.bottom{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:min(536px,calc(100% - 24px));border:0;border-radius:15px;background:#e31b23;color:#fff;padding:15px;font-weight:900}.map{min-height:180px;border-radius:14px;background:repeating-linear-gradient(45deg,#ddd 0,#ddd 10px,#e8e8e8 10px,#e8e8e8 20px);display:flex;align-items:center;justify-content:center;text-align:center;padding:15px}.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#eee;font-size:11px;font-weight:900}.ok{background:#dff5df}.warn{background:#fff0c7}.notice{padding:10px;border-radius:10px;background:#f6f6f6;font-size:13px}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111}
+button,input,select{font:inherit}
+body{min-height:100vh}
+header{background:#111318;color:#fff;padding:22px 18px 18px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:28px}
+header p{margin:6px 0 0;color:#c9c9c9;font-size:15px}
+main{max-width:760px;margin:auto;padding:20px 18px 110px}
+.card{border:2px solid #e1e1e1;border-radius:22px;padding:20px;margin:0 0 18px;background:#fff}
+h2{font-size:28px;margin:0 0 18px}
+h3{font-size:21px;margin:18px 0 12px}
+.service{font-size:18px;color:#666;line-height:1.45}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{border:0;border-radius:18px;padding:16px 18px;font-weight:800;background:#111;color:#fff;cursor:pointer}
+.btn.light{background:#eee;color:#111}
+.btn.red{background:#ed1c24}
+.btn.full{width:100%}
+.product{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e5e5e5;gap:12px}
+.product:last-child{border-bottom:0}
+.product-name{font-size:20px;font-weight:800}
+.price{font-size:18px;margin-top:4px}
+.add{min-width:100px}
+label{display:block;font-weight:700;font-size:17px;margin:13px 0 7px}
+input,select{width:100%;padding:14px 13px;border:2px solid #999;border-radius:12px;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.notice{background:#f3f3f3;border-radius:16px;padding:13px;margin-top:12px;font-size:16px}
+.stat{display:flex;justify-content:space-between;border-bottom:1px solid #e5e5e5;padding:14px 0;font-size:18px;gap:12px}
+.stat strong{font-size:19px;text-align:right}
+.total{font-size:25px;font-weight:900;margin-top:10px}
+.sticky-cart{position:fixed;left:12px;right:12px;bottom:12px;z-index:10}
+.sticky-cart button{width:100%;font-size:20px;padding:19px;border-radius:22px}
+.hidden{display:none}
+.payment{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.payment label{margin:0;font-weight:500}
+.order{border-bottom:1px solid #ddd;padding:12px 0}
+.small{font-size:14px;color:#666}
+@media(max-width:520px){
+  main{padding:16px 14px 110px}
+  .grid,.row{grid-template-columns:1fr}
+  h2{font-size:25px}
+  .product-name{font-size:18px}
+  .add{min-width:86px}
+}
