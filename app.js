@@ -261,14 +261,75 @@ function ordersPage(){
 
 function adminPage(){
   document.getElementById("app").innerHTML=`
-  <header><h1>Admin</h1><p>Order management</p></header><main>
-  <section class="card"><h2>Pending Orders</h2>
-  ${orders.length?orders.map(o=>`<div class="order"><b>#${o.id}</b><div>${o.name} • ${o.municipality}, ${o.barangay}</div><div>${peso(o.subtotal)} + service ${peso(o.serviceFee)}</div>
-  <label>Delivery Fee</label><input id="fee-${o.id}" type="number" min="0" step="0.01" placeholder="Enter fee">
-  <div style="margin-top:8px"><button class="btn" onclick="approve(${o.id})">Approve Fee / Order</button></div></div>`).join(""):`<div class="notice">No orders.</div>`}
-  </section><button class="btn light full" onclick="home()">← Back</button></main>`;
+  <header><h1>Admin</h1><p>Order management</p></header>
+  <main>
+    <section class="card">
+      <h2>Orders</h2>
+      ${orders.length ? orders.slice().reverse().map(o=>`
+        <div class="order">
+          <b>Order #${o.id}</b>
+          <div>${o.name} • ${o.mobile}</div>
+          <div>${o.municipality}, ${o.barangay}</div>
+          <div class="small">${o.address}</div>
+
+          <div class="stat">
+            <span>Distance</span>
+            <strong>${o.distanceKm != null ? Number(o.distanceKm).toFixed(2)+" km" : "N/A"}</strong>
+          </div>
+
+          <div class="stat">
+            <span>Delivery Fee</span>
+            <strong>${o.deliveryFee == null ? "Pending" : peso(o.deliveryFee)}</strong>
+          </div>
+
+          <div class="stat">
+            <span>Status</span>
+            <strong>${o.status}</strong>
+          </div>
+
+          ${
+            o.status === "Pending"
+            ? (
+                o.deliveryFee != null
+                ? `<button class="btn full" style="margin-top:8px"
+                     onclick="approve(${o.id})">
+                     ✅ APPROVE ORDER
+                   </button>`
+                : `<div class="notice">
+                     ⚠️ Delivery fee is not available yet.
+                   </div>`
+              )
+            : `<div class="notice">Order ${o.status}.</div>`
+          }
+        </div>
+      `).join("") : `
+        <div class="notice">No orders.</div>
+      `}
+    </section>
+
+    <button class="btn light full" onclick="home()">← Back</button>
+  </main>`;
 }
+
 function approve(id){
+  const o = orders.find(x => x.id === id);
+
+  if(!o){
+    alert("Order not found.");
+    return;
+  }
+
+  if(o.deliveryFee == null){
+    alert("Delivery fee is missing. The order cannot be approved yet.");
+    return;
+  }
+
+  o.status = "Approved";
+  o.approvedAt = new Date().toISOString();
+
+  save();
+  adminPage();
+}
   const o=orders.find(x=>x.id===id), el=document.getElementById("fee-"+id);
   if(!o||!el)return;
   const fee=Number(el.value);
