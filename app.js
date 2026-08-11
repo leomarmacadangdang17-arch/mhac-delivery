@@ -143,25 +143,76 @@ function allowGPS(){
   },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
 }
 
-function checkAddress(){
+async function geocodeAddress(address,barangay,municipality){
+  const q=encodeURIComponent(`${address}, ${barangay}, ${municipality}, Tarlac, Philippines`);
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}`,{
+    headers:{"Accept-Language":"en"}
+  });
+  if(!r.ok)throw Error("geocode");
+  const d=await r.json();
+  if(!d.length)throw Error("notfound");
+  return {lat:Number(d[0].lat),lng:Number(d[0].lon),display:d[0].display_name};
+}
+
+function distanceKm(aLat,aLon,bLat,bLon){
+  const R=6371;
+  const dLat=(bLat-aLat)*Math.PI/180;
+  const dLon=(bLon-aLon)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+
+    Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function calculateDeliveryFee(km){
+  // First km = ₱40; every succeeding started 1 km = +₱10.
+  if(!Number.isFinite(km)||km<0)return null;
+  return 40 + Math.max(0,Math.ceil(km)-1)*10;
+}
+
+async function checkAddress(){
   const address=document.getElementById("address").value.trim();
+  const municipality=document.getElementById("municipality").value;
+  const barangay=document.getElementById("barangay").value;
   if(!address){alert("Please enter your complete delivery address.");return;}
+
   if(!gps){
-    document.getElementById("checkResult").textContent="⚠️ Address entered. GPS is not available, so distance is pending admin approval.";
     checkoutDistance=null;checkoutDeliveryFee=null;
+    document.getElementById("checkResult").textContent="⚠️ Please allow GPS first so we can calculate the delivery distance.";
+    document.getElementById("distance").textContent="GPS required";
+    document.getElementById("fee").textContent="GPS required";
+    document.getElementById("grandTotal").textContent="TOTAL: GPS required";
+    return;
+  }
+
+  const result=document.getElementById("checkResult");
+  result.textContent="⏳ Checking address and calculating delivery fee...";
+  document.getElementById("distance").textContent="calculating...";
+  document.getElementById("fee").textContent="calculating...";
+
+  try{
+    const destination=await geocodeAddress(address,barangay,municipality);
+    const km=distanceKm(gps.lat,gps.lon,destination.lat,destination.lng);
+
+    // Safety guard against obviously wrong geocoding results.
+    if(!Number.isFinite(km)||km>100){
+      throw Error("unreasonable_distance");
+    }
+
+    checkoutDistance=km;
+    checkoutDeliveryFee=calculateDeliveryFee(km);
+
+    document.getElementById("distance").textContent=`${km.toFixed(2)} km`;
+    document.getElementById("fee").textContent=peso(checkoutDeliveryFee);
+    document.getElementById("grandTotal").textContent=`TOTAL: ${peso(subtotal()*1.10+checkoutDeliveryFee)}`;
+    result.textContent=`✅ Address found: ${destination.display}`;
+  }catch(e){
+    checkoutDistance=null;
+    checkoutDeliveryFee=null;
     document.getElementById("distance").textContent="Admin approval";
     document.getElementById("fee").textContent="Admin approval";
     document.getElementById("grandTotal").textContent="TOTAL: Admin approval";
-    return;
+    result.textContent="⚠️ We could not reliably locate this address. Please check the address or use Admin approval.";
   }
-  // Keep the checkout safe: GPS is a real point, but without a geocoding service
-  // we do not pretend that the typed address can be converted into exact coordinates.
-  checkoutDistance=null;
-  checkoutDeliveryFee=null;
-  document.getElementById("checkResult").textContent="✅ Address recorded. Exact delivery distance/fee requires admin approval.";
-  document.getElementById("distance").textContent="Admin approval";
-  document.getElementById("fee").textContent="Admin approval";
-  document.getElementById("grandTotal").textContent="TOTAL: Admin approval";
 }
 
 function placeOrder(){
