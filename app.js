@@ -145,58 +145,26 @@ function allowGPS(){
 
 async function geocodeAddress(address,barangay,municipality){
   const queries=[
-    `${address}, ${barangay}, ${municipality}, Tarlac, Philippines`,
-    `${barangay}, ${municipality}, Tarlac, Philippines`
+    `${barangay}, ${municipality}, Tarlac, Philippines`,
+    `${address}, ${barangay}, ${municipality}, Tarlac, Philippines`
   ];
 
-  // Keep searches inside Tarlac so a bad text match cannot produce a
-  // completely unrelated location hundreds of kilometres away.
-  const viewbox="120.20,15.90,120.90,15.10";
-
   for(const qText of queries){
-    const q=encodeURIComponent(qText);
-
-    // First try Nominatim.
     try{
-      const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&bounded=1&viewbox=${viewbox}&q=${q}`;
+      const q=encodeURIComponent(qText);
+      const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&q=${q}`;
       const r=await fetch(url,{headers:{"Accept-Language":"en"}});
-      if(r.ok){
-        const d=await r.json();
-        if(d.length){
-          return {
-            lat:Number(d[0].lat),
-            lng:Number(d[0].lon),
-            display:d[0].display_name,
-            approximate:qText!==queries[0]
-          };
-        }
-      }
-    }catch(e){}
-
-    // Fallback to Photon if Nominatim does not return a result.
-    try{
-      const url=`https://photon.komoot.io/api/?limit=1&lang=en&q=${q}`;
-      const r=await fetch(url);
-      if(r.ok){
-        const d=await r.json();
-        const f=d.features&&d.features[0];
-        if(f&&f.geometry&&Array.isArray(f.geometry.coordinates)){
-          const [lng,lat]=f.geometry.coordinates;
-          if(lat>=15.10&&lat<=15.90&&lng>=120.20&&lng<=120.90){
-            return {
-              lat:Number(lat),
-              lng:Number(lng),
-              display:f.properties?.name
-                ? `${f.properties.name}, ${f.properties.city||municipality}, Tarlac, Philippines`
-                : qText,
-              approximate:qText!==queries[0]
-            };
-          }
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(d.length){
+        const lat=Number(d[0].lat),lng=Number(d[0].lon);
+        // Tarlac safety bounds: reject obviously unrelated results.
+        if(lat>=15.10&&lat<=15.90&&lng>=120.20&&lng<=120.90){
+          return {lat,lng,display:d[0].display_name,approximate:qText===queries[0]};
         }
       }
     }catch(e){}
   }
-
   throw Error("notfound");
 }
 
@@ -251,7 +219,7 @@ async function checkAddress(){
     document.getElementById("fee").textContent=peso(checkoutDeliveryFee);
     document.getElementById("grandTotal").textContent=`TOTAL: ${peso(subtotal()*1.10+checkoutDeliveryFee)}`;
     result.textContent=destination.approximate
-      ? `✅ GPS distance estimated to ${barangay}, ${municipality}. Complete address was not found, so barangay location was used.`
+      ? `✅ GPS distance estimated to ${barangay}, ${municipality}.`
       : `✅ Address found: ${destination.display}`;
   }catch(e){
     checkoutDistance=null;

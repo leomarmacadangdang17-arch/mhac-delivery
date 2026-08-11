@@ -13,3 +13,5 @@ The important fix is that `index.html` directly loads `app.js`, and the app is w
 GitHub Pages should publish from the repository root (or the selected Pages branch/folder).
 
 GPS works only when the browser grants location permission. Exact address-to-coordinate geocoding is not faked; when exact distance cannot be determined, the checkout shows Admin approval instead of a bogus distance.
+
+GPS calculation uses the selected barangay as the primary destination lookup, with the complete address as a fallback. Delivery fee: first started kilometer ₱40, each succeeding started kilometer +₱10.
